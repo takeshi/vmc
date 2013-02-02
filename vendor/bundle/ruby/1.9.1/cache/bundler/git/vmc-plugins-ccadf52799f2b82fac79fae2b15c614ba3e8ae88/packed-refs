@@ -1,0 +1,4 @@
+# pack-refs with: peeled 
+29b03f1fb411ed9ee8ee20d85036887fa5e9c03a refs/heads/master
+5b45ffefc971c4e654683edc0d666a5c40f0f061 refs/tags/scotty_09012012
+^ddc2d13e7d660d7d8eae48c1ebbe6e0e46970468

@@ -1,0 +1,7 @@
+# pack-refs with: peeled 
+fa63abff7b5a4fe9852d75ca0497bcb00529d4dc refs/heads/increase-timeout
+98a8e7be931689aed907b151f41577c2104ff5fe refs/heads/master
+56bc28cf4ce58c46ab4881b6c0bbdede01e8e40f refs/heads/password-grant
+978cab02c318613b8fe90275df9725966c888b80 refs/heads/snapshots
+241830df0ec1f057f68f0945949c55f82e92aeca refs/tags/scotty_09012012
+^027302758586308ab2e7c6258cb9f574a754287f
