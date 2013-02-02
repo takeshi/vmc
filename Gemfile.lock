@@ -1,6 +1,7 @@
 GIT
   remote: git://github.com/cloudfoundry/vmc-lib.git
-  revision: 0094f73475f8d9bea0bc602f09e679ac5237ae59
+  revision: 98a8e7be931689aed907b151f41577c2104ff5fe
+  ref: 98a8e7be93
   specs:
     cfoundry (0.4.19)
       cf-uaa-lib (~> 1.3.3)
@@ -10,7 +11,8 @@ GIT
 
 GIT
   remote: git://github.com/cloudfoundry/vmc-plugins.git
-  revision: b5ad0a0b3ccd535aab7a1503e9cbd9fad1d5f6d4
+  revision: 29b03f1fb411ed9ee8ee20d85036887fa5e9c03a
+  ref: 29b03f1fb4
   specs:
     admin-vmc-plugin (0.0.5)
       cfoundry (~> 0.4.0)
@@ -29,6 +31,7 @@ GIT
 GIT
   remote: git://github.com/vito/clouseau.git
   revision: af05617556504c436901d43edc76f6578f363b83
+  ref: af05617556
   specs:
     clouseau (0.0.1)
       rubyzip (~> 0.9.9)
@@ -36,12 +39,14 @@ GIT
 GIT
   remote: git://github.com/vito/interact.git
   revision: 18f1dd528ba933f60f38f16ae0974ddad8950e25
+  ref: 18f1dd528b
   specs:
     interact (0.5.1)
 
 GIT
   remote: git://github.com/vito/mothership.git
   revision: 18ac405ac37ecef3e7437fa81b4122c715116e95
+  ref: 18ac405ac3
   specs:
     mothership (0.5.0)
 
