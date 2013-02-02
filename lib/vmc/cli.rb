@@ -73,7 +73,7 @@ module VMC
         if force?
           fail "Please log in with 'vmc login'."
         else
-          line c("Please log in with 'vmc login'.", :warning)
+          line c("Please log in first to proceed.", :warning)
           line
           invoke :login
           invalidate_client
@@ -158,6 +158,17 @@ module VMC
         f.puts msg
         f.puts ""
 
+        if e.respond_to?(:request_trace)
+          f.puts "<<<"
+          f.puts e.request_trace
+        end
+
+        if e.respond_to?(:response_trace)
+          f.puts e.response_trace
+          f.puts ">>>"
+          f.puts ""
+        end
+
         vmc_dir = File.expand_path("../../../..", __FILE__) + "/"
         e.backtrace.each do |loc|
           if loc =~ /\/gems\//
@@ -213,12 +224,7 @@ module VMC
     end
 
     def err(msg, status = 1)
-      if quiet?
-        $stderr.puts(msg)
-      else
-        puts c(msg, :error)
-      end
-
+      $stderr.puts c(msg, :error)
       exit_status status
     end
 
@@ -271,6 +277,7 @@ module VMC
     end
 
     def client_target
+      check_target
       File.read(target_file).chomp
     end
 
@@ -293,23 +300,27 @@ module VMC
       new_toks = File.expand_path(VMC::TOKENS_FILE)
       old_toks = File.expand_path(VMC::OLD_TOKENS_FILE)
 
-      if File.exist? new_toks
+      info = if File.exist? new_toks
         YAML.load_file(new_toks)
       elsif File.exist? old_toks
         MultiJson.load(File.read(old_toks))
       else
         {}
       end
+
+      normalize_targets_info(info)
+    end
+
+    def normalize_targets_info(info_by_url)
+      info_by_url.reduce({}) do |hash, pair|
+        key, value = pair
+        hash[key] = value.is_a?(String) ? {:token => value } : value
+        hash
+      end
     end
 
     def target_info(target = client_target)
-      info = targets_info[target]
-
-      if info.is_a? String
-        { :token => info }
-      else
-        info || {}
-      end
+      targets_info[target] || {}
     end
 
     def save_targets(ts)
@@ -337,7 +348,7 @@ module VMC
     end
 
     def v2?
-      client.is_a?(CFoundry::V2::Client)
+      client.version == 2
     end
 
     def invalidate_client
@@ -349,15 +360,16 @@ module VMC
       return @@client if defined?(@@client) && @@client
 
       info = target_info(target)
+      token = info[:token] && CFoundry::AuthToken.from_hash(info)
 
       @@client =
         case info[:version]
         when 2
-          CFoundry::V2::Client.new(target, info[:token])
+          CFoundry::V2::Client.new(target, token)
         when 1
-          CFoundry::V1::Client.new(target, info[:token])
+          CFoundry::V1::Client.new(target, token)
         else
-          CFoundry::Client.new(target, info[:token])
+          CFoundry::Client.new(target, token)
         end
 
       @@client.proxy = input[:proxy]
@@ -367,14 +379,7 @@ module VMC
       @@client.log = File.expand_path("#{LOGS_DIR}/#{uri.host}.log")
 
       unless info.key? :version
-        info[:version] =
-          case @@client
-          when CFoundry::V2::Client
-            2
-          else
-            1
-          end
-
+        info[:version] = @@client.version
         save_target_info(info, target)
       end
 

@@ -2,10 +2,7 @@ require 'spec_helper'
 require 'stringio'
 
 describe VMC::Space::Spaces do
-  let(:global) { { :color => false } }
-  let(:inputs) { {} }
-  let(:given) { {} }
-  let(:output) { StringIO.new }
+  let(:full) { false }
   let!(:space_1) { fake(:space, :name => "bb_second", :apps => fake_list(:app, 2), :service_instances => [fake(:service_instance)]) }
   let!(:space_2) { fake(:space, :name => "aa_first", :apps => [fake(:app)], :service_instances => fake_list(:service_instance, 3), :domains => [fake(:domain)]) }
   let!(:space_3) { fake(:space, :name => "cc_last", :apps => fake_list(:app, 2), :service_instances => fake_list(:service_instance, 2), :domains => fake_list(:domain, 2)) }
@@ -14,15 +11,9 @@ describe VMC::Space::Spaces do
   let(:client) { fake_client(:spaces => spaces, :current_organization => organization) }
 
   before do
-    any_instance_of(VMC::CLI) do |cli|
+    any_instance_of described_class do |cli|
       stub(cli).client { client }
       stub(cli).precondition { nil }
-    end
-  end
-
-  subject do
-    with_output_to output do
-      Mothership.new.invoke(:spaces, inputs, given, global)
     end
   end
 
@@ -45,19 +36,21 @@ describe VMC::Space::Spaces do
     end
   end
 
+  subject { vmc %W[spaces --#{bool_flag(:full)} --no-quiet] }
+
   it 'should have the correct first two lines' do
     subject
 
-    output.rewind
-    expect(output.readline).to match /Getting spaces.*OK/
-    expect(output.readline).to eq "\n"
+    stdout.rewind
+    expect(stdout.readline).to match /Getting spaces.*OK/
+    expect(stdout.readline).to eq "\n"
   end
 
   context 'when there are no spaces' do
     let(:spaces) { [] }
 
     context 'and the full flag is given' do
-      let(:inputs) { {:full => true} }
+      let(:full) { true }
 
       it 'displays yaml-style output with all space details' do
         any_instance_of VMC::Space::Spaces do |spaces|
@@ -71,16 +64,16 @@ describe VMC::Space::Spaces do
       it 'should show only the progress' do
         subject
 
-        output.rewind
-        expect(output.readline).to match /Getting spaces.*OK/
-        expect(output).to be_eof
+        stdout.rewind
+        expect(stdout.readline).to match /Getting spaces.*OK/
+        expect(stdout).to be_eof
       end
     end
   end
 
   context 'when there are spaces' do
     context 'and the full flag is given' do
-      let(:inputs) { {:full => true} }
+      let(:full) { true }
 
       it 'displays yaml-style output with all space details' do
         any_instance_of VMC::Space::Spaces do |spaces|
@@ -96,15 +89,15 @@ describe VMC::Space::Spaces do
       it 'displays tabular output with names, spaces and domains' do
         subject
 
-        output.rewind
-        output.readline
-        output.readline
+        stdout.rewind
+        stdout.readline
+        stdout.readline
 
-        expect(output.readline).to match /name\s+apps\s+services/
+        expect(stdout.readline).to match /name\s+apps\s+services/
         spaces.sort_by(&:name).each do |space|
-          expect(output.readline).to match /#{space.name}\s+#{name_list(space.apps)}\s+#{name_list(space.service_instances)}/
+          expect(stdout.readline).to match /#{space.name}\s+#{name_list(space.apps)}\s+#{name_list(space.service_instances)}/
         end
-        expect(output).to be_eof
+        expect(stdout).to be_eof
       end
     end
   end

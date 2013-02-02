@@ -6,51 +6,53 @@ module VMC::App
     group :apps, :info, :hidden => true
     input :app, :desc => "Application to update", :argument => true,
           :from_given => by_name(:app)
-    input :instances, :desc => "Number of instances to run", :type => :numeric
+    input :instances, :desc => "Number of instances to run",
+          :type => :numeric
     input :memory, :desc => "Memory limit"
+    input :disk, :desc => "Disk quota"
     input :plan, :desc => "Application plan", :default => "D100"
     input :restart, :desc => "Restart app after updating?", :default => true
     def scale
       app = input[:app]
 
-      if input.given?(:instances)
+      if input.has?(:instances)
         instances = input[:instances, app.total_instances]
       end
 
-      if input.given?(:memory)
+      if input.has?(:memory)
         memory = input[:memory, app.memory]
       end
 
-      if input.given?(:plan)
+      if input.has?(:disk)
+        disk = input[:disk, human_mb(app.disk_quota)]
+      end
+
+      if input.has?(:plan)
         fail "Plans not supported on target cloud." unless v2?
 
         plan_name = input[:plan]
         production = !!(plan_name =~ /^p/i)
       end
 
-      unless instances || memory || plan_name
+      unless instances || memory || disk || plan_name
         instances = input[:instances, app.total_instances]
         memory = input[:memory, app.memory]
       end
 
-      memory = megabytes(memory) if memory
+      app.total_instances = instances if input.has?(:instances)
+      app.memory = megabytes(memory) if input.has?(:memory)
+      app.disk_quota = megabytes(disk) if input.has?(:disk)
+      app.production = production if input.has?(:plan)
 
-      instances_changed = instances && instances != app.total_instances
-      memory_changed = memory && memory != app.memory
-      plan_changed = plan_name && production != app.production
-
-      unless memory_changed || instances_changed || plan_changed
-        fail "No changes!"
-      end
+      fail "No changes!" unless app.changed?
 
       with_progress("Scaling #{c(app.name, :name)}") do
-        app.total_instances = instances if instances_changed
-        app.memory = memory if memory_changed
-        app.production = production if plan_changed
         app.update!
       end
 
-      if memory_changed && app.started? && input[:restart]
+      needs_restart = app.changes.key?(:memory) || app.changes.key?(:disk_quota)
+
+      if needs_restart && app.started? && input[:restart]
         invoke :restart, :app => app
       end
     end

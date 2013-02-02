@@ -1,8 +1,8 @@
+language: ruby
 rvm:
   - "1.9.3"
   - "1.9.2"
   - "1.8.7"
-
 env:
   global:
     - secure: "UE5QlcvsNEEIiaFVBThh9LFW3LyQG8endi10y1kislgdlVrkpx/b/REU0wwz\nLf1aPGMtKCWbRqBZk0zg8JYTQoig/2wXnct5IJuabOrtgcoWZl/pxGr/0U5A\n5/v0pEq1i3FtXBbOe4Oe2vQuJzhs/WrUXO6gGHsncwQsAreqJtw="

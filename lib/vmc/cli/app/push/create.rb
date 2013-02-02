@@ -12,8 +12,9 @@ module VMC::App
       inputs[:space] = client.current_space if client.current_space
       inputs[:production] = !!(input[:plan] =~ /^p/i) if v2?
       inputs[:framework] = framework = determine_framework
-      inputs[:command] = input[:command] if framework.name == "standalone"
+      inputs[:command] = input[:command] if can_have_custom_start_command?(framework)
       inputs[:runtime] = determine_runtime(framework)
+      inputs[:buildpack] = input[:buildpack] if v2?
 
       human_mb = human_mb(detector.suggested_memory(framework) || 64)
       inputs[:memory] = megabytes(input[:memory, human_mb])
@@ -22,7 +23,7 @@ module VMC::App
     end
 
     def determine_framework
-      return input[:framework] if input.given?(:framework)
+      return input[:framework] if input.has?(:framework)
 
       if (detected_framework = detector.detect_framework)
         input[:framework, [detected_framework], detected_framework, :other]
@@ -32,7 +33,7 @@ module VMC::App
     end
 
     def determine_runtime(framework)
-      return input[:runtime] if input.given?(:runtime)
+      return input[:runtime] if input.has?(:runtime)
 
       detected_runtimes =
         if framework.name == "standalone"
@@ -113,6 +114,10 @@ module VMC::App
     end
 
     private
+
+    def can_have_custom_start_command?(framework)
+      %w(standalone buildpack).include?(framework.name)
+    end
 
     def all_instances
       @all_instances ||= client.service_instances

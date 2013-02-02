@@ -22,34 +22,27 @@ describe VMC::User::Passwd do
 
   describe '#passwd' do
     let(:client) { fake_client }
-    let(:output) { StringIO.new }
-    let(:out) { output.string }
     let(:old_password) { "old" }
     let(:new_password) { "password" }
     let(:verify_password) { new_password }
     let(:score) { :strong }
-
     let(:guid) { random_string("my-object-guid") }
     let(:user_model) { fake_model { attribute :password, :object } }
     let(:user_object) { user_model.new(guid, client) }
     let(:user) { user_object.fake(:password => 'foo') }
 
     before do
-      stub(VMC::CLI).exit { |code| code }
-      any_instance_of(VMC::CLI) do |cli|
+      any_instance_of described_class do |cli|
         stub(cli).client { client }
         stub(cli).precondition { nil }
       end
+      stub(client).logged_in? { true }
       stub(client).current_user { user }
       stub(client).register
       stub(client).base.stub!.uaa.stub!.password_score(new_password) { score }
     end
 
-    subject do
-      with_output_to output do
-        VMC::CLI.start %W(passwd --password #{old_password} --new-password #{new_password} --verify #{verify_password} --force --debug)
-      end
-    end
+    subject { vmc %W[passwd --password #{old_password} --new-password #{new_password} --verify #{verify_password} --no-force --debug] }
 
     context 'when the passwords dont match' do
       let(:verify_password) { "other_password" }
@@ -58,12 +51,12 @@ describe VMC::User::Passwd do
 
       it 'fails' do
         subject
-        expect(out).to include "Passwords do not match."
+        expect(stderr.string).to include "Passwords do not match."
       end
 
       it "doesn't print out the score" do
         subject
-        expect(out).not_to include "strength"
+        expect(stdout.string).not_to include "strength"
       end
 
       it "doesn't log in or register" do
@@ -81,7 +74,7 @@ describe VMC::User::Passwd do
 
       it 'prints out the password score' do
         subject
-        expect(out).to include "Your password strength is: strong"
+        expect(stdout.string).to include "Your password strength is: strong"
       end
 
       it 'changes the password' do
@@ -97,7 +90,7 @@ describe VMC::User::Passwd do
 
       it 'prints out the password score' do
         subject
-        expect(out).to include "Your password strength is: weak"
+        expect(stderr.string).to include "Your password strength is: weak"
       end
 
       it "doesn't change the password" do

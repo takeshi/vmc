@@ -1,12 +1,13 @@
 module VMC::App
   module Sync
     def apply_changes(app)
-      app.memory = megabytes(input[:memory]) if input.given?(:memory)
-      app.total_instances = input[:instances] if input.given?(:instances)
-      app.command = input[:command] if input.given?(:command)
-      app.production = input[:plan].upcase.start_with?("P") if input.given?(:plan)
-      app.framework = input[:framework] if input.given?(:framework)
-      app.runtime = input[:runtime] if input.given?(:runtime)
+      app.memory = megabytes(input[:memory]) if input.has?(:memory)
+      app.total_instances = input[:instances] if input.has?(:instances)
+      app.command = input[:command] if input.has?(:command)
+      app.production = input[:plan].upcase.start_with?("P") if input.has?(:plan)
+      app.framework = input[:framework] if input.has?(:framework)
+      app.runtime = input[:runtime] if input.has?(:runtime)
+      app.buildpack = input[:buildpack] if input.has?(:buildpack)
     end
 
     def display_changes(app)
@@ -14,8 +15,10 @@ module VMC::App
 
       line "Changes:"
 
-      app.changes.each do |attr, (old, new)|
-        line "#{c(attr, :name)}: #{diff_str(attr, old)} -> #{diff_str(attr, new)}"
+      indented do
+        app.changes.each do |attr, (old, new)|
+          line "#{c(attr, :name)}: #{diff_str(attr, old)} -> #{diff_str(attr, new)}"
+        end
       end
     end
 
